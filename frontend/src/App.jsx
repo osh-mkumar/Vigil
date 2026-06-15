@@ -4,51 +4,18 @@ import './App.css';
 // Sample browser activity logs to demonstrate the analyzer
 // In production, these would come from the Chrome extension
 const SAMPLE_LOGS = [
-  {
-    timestamp: '2025-01-17T14:00:00Z',
-    url: 'https://github.com/user/project',
-    domain: 'github.com'
-  },
-  {
-    timestamp: '2025-01-17T14:01:00Z',
-    url: 'https://stackoverflow.com/questions/12345',
-    domain: 'stackoverflow.com'
-  },
-  {
-    timestamp: '2025-01-17T14:02:00Z',
-    url: 'https://github.com/user/project',
-    domain: 'github.com'
-  },
-  {
-    timestamp: '2025-01-17T14:03:00Z',
-    url: 'https://stackoverflow.com/questions/67890',
-    domain: 'stackoverflow.com'
-  },
-  {
-    timestamp: '2025-01-17T14:04:00Z',
-    url: 'https://github.com/user/project',
-    domain: 'github.com'
-  },
-  {
-    timestamp: '2025-01-17T14:15:00Z',
-    url: 'https://notion.so/my-project',
-    domain: 'notion.so'
-  },
-  {
-    timestamp: '2025-01-17T14:20:00Z',
-    url: 'https://notion.so/my-project',
-    domain: 'notion.so'
-  },
-  {
-    timestamp: '2025-01-17T14:25:00Z',
-    url: 'https://notion.so/my-project',
-    domain: 'notion.so'
-  },
-  {
-    timestamp: '2025-01-17T14:30:00Z',
-    url: 'https://notion.so/my-project',
-    domain: 'notion.so'
-  }
+  // Session starts: Development
+  { timestamp: '2025-01-17T14:00:00Z', url: 'https://github.com/user/project', domain: 'github.com' },
+  // Research Loop: Dev -> Docs -> Dev
+  { timestamp: '2025-01-17T14:15:00Z', url: 'https://docs.python.org/3/library/json.html', domain: 'docs.python.org' },
+  { timestamp: '2025-01-17T14:18:00Z', url: 'https://github.com/user/project', domain: 'github.com' },
+  // Distraction Loop: Social -> Video -> Social
+  { timestamp: '2025-01-17T14:30:00Z', url: 'https://twitter.com/home', domain: 'twitter.com' },
+  { timestamp: '2025-01-17T14:32:00Z', url: 'https://youtube.com/watch?v=...', domain: 'youtube.com' },
+  { timestamp: '2025-01-17T14:45:00Z', url: 'https://twitter.com/home', domain: 'twitter.com' },
+  // Back to work
+  { timestamp: '2025-01-17T14:50:00Z', url: 'https://notion.so/my-project', domain: 'notion.so' },
+  { timestamp: '2025-01-17T15:20:00Z', url: 'https://github.com/user/project', domain: 'github.com' }
 ];
 
 export default function App() {

@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { generateAnalytics } from './analytics.js';
 
 // ========================================
 // 1. LOAD ENVIRONMENT VARIABLES
@@ -27,9 +28,7 @@ app.post('/analyze', async (req, res) => {
   console.log('✅ /analyze HIT');
 
   try {
-    const logs = Array.isArray(req.body)
-      ? req.body
-      : req.body?.logs;
+    const logs = Array.isArray(req.body) ? req.body : req.body?.logs;
 
     if (!Array.isArray(logs) || logs.length === 0) {
       console.warn('⚠️ No valid logs received');
@@ -49,27 +48,11 @@ app.post('/analyze', async (req, res) => {
       domain: log.domain || extractDomain(log.url)
     }));
 
-    // Generate static analysis based on new VIGIL metrics
-    // In the future, this is where rule-based or optional ML logic will live
-    console.log('📊 Returning VIGIL metrics');
-    return res.status(200).json({
-      focusScore: 78,
-      deepWorkTime: 45,
-      contextSwitchCount: 12,
-      longestFocusSession: 25,
-      researchLoops: [
-        {
-          domains: ['github.com', 'stackoverflow.com'],
-          occurrences: 4
-        }
-      ],
-      distractionLoops: [
-        {
-          domains: ['twitter.com', 'news.ycombinator.com'],
-          occurrences: 2
-        }
-      ]
-    });
+    // Process logs through our local VIGIL analytics engine
+    const analysisResults = generateAnalytics(formattedLogs);
+
+    console.log('📊 Generated VIGIL Analytics Data');
+    return res.status(200).json(analysisResults);
 
   } catch (error) {
     console.error('🔥 /analyze fatal error:', error);
@@ -102,5 +85,5 @@ function extractDomain(url) {
 // 6. START SERVER
 // ========================================
 app.listen(PORT, () => {
-  console.log(`✓ VIGIL Backend running on http://localhost:${PORT}`);
+  console.log(`✓ VIGIL Analytics Backend running on http://localhost:${PORT}`);
 });
