@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Gelasio:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+  /* Warm cream background */
+  --bg-primary: #FDFCF9; 
+  --bg-secondary: #F4F3EE;
+  --bg-card: #FFFFFF;
+  
+  --border-subtle: #E8E6E1;
+  --border-strong: #D5D2C9;
+  
+  /* Soft black */
+  --text-primary: #2C2A29; 
+  --text-secondary: #63615E;
+  --text-muted: #95928C;
+  
+  /* Deep navy primary accent */
+  --accent-primary: #1C335B; 
+  
+  /* Muted teal for positive */
+  --accent-productive: #3F7A7D; 
+  
+  /* Muted burgundy for negative */
+  --accent-distracting: #8E444B; 
+  
+  /* Subtle gray-blue for communication */
+  --accent-communication: #627282;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Gelasio', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+}

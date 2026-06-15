@@ -1,14 +1,16 @@
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 export default {
   plugins: [react()],
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+  base: './', // Use relative paths for Chrome extension
+  build: {
+    outDir: '../extension/dashboard',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        popup: resolve(__dirname, 'popup.html')
       }
     }
   }

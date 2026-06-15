@@ -1,0 +1,107 @@
+{
+  "Development": [
+    "github.com",
+    "gitlab.com",
+    "bitbucket.org",
+    "stackoverflow.com",
+    "developer.mozilla.org",
+    "canva.com",
+    "adobe.com"
+  ],
+  "Learning": [
+    "coursera.org",
+    "udemy.com",
+    "freecodecamp.org",
+    "leetcode.com",
+    "geeksforgeeks.org",
+    "wikipedia.org",
+    "chatgpt.com",
+    "gemini.google.com",
+    "claude.ai",
+    "openai.com",
+    "quora.com",
+    "instructure.com",
+    "deepseek.com",
+    "tradingview.com",
+    "chat.deepseek.com"
+  ],
+  "Documentation": [
+    "docs.python.org",
+    "react.dev",
+    "nodejs.org",
+    "notion.so",
+    "microsoft.com",
+    "ilovepdf.com",
+    "acesso.gov.br"
+  ],
+  "Communication": [
+    "gmail.com",
+    "mail.google.com",
+    "outlook.com",
+    "slack.com",
+    "discord.com",
+    "teams.microsoft.com",
+    "whatsapp.com",
+    "microsoftonline.com",
+    "live.com",
+    "office.com",
+    "telegram.org",
+    "zoom.us",
+    "mail.ru",
+    "messenger.com"
+  ],
+  "Video": [
+    "youtube.com",
+    "vimeo.com",
+    "twitch.tv",
+    "dailymotion.com",
+    "bilibili.com"
+  ],
+  "Social": [
+    "instagram.com",
+    "x.com",
+    "twitter.com",
+    "facebook.com",
+    "reddit.com",
+    "pinterest.com",
+    "tiktok.com",
+    "linkedin.com",
+    "vk.com",
+    "steamcommunity.com",
+    "linktr.ee",
+    "threads.com",
+    "snapchat.com"
+  ],
+  "Entertainment": [
+    "netflix.com",
+    "primevideo.com",
+    "hotstar.com",
+    "fandom.com",
+    "spotify.com",
+    "imdb.com",
+    "roblox.com",
+    "supercell.com",
+    "espn.com",
+    "steampowered.com",
+    "disneyplus.com",
+    "hbomax.com",
+    "genius.com",
+    "msn.com"
+  ],
+  "Search": [
+    "google.com",
+    "bing.com",
+    "duckduckgo.com",
+    "yahoo.com",
+    "yahoo.co.jp",
+    "yandex.ru",
+    "naver.com",
+    "brave.com",
+    "ecosia.org",
+    "opera.com",
+    "google.com.br"
+  ],
+  "Productivity": [
+    "drive.google.com"
+  ]
+}
