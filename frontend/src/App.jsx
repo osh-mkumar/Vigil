@@ -9,9 +9,10 @@ import {
   MessageSquareWarning,
   ZapOff,
   Settings,
-  ShieldCheck
+  ShieldCheck,
+  Info
 } from 'lucide-react';
-import { generateAnalytics, getUnclassifiedDomains } from './lib/analytics';
+import { generateAnalytics, getUnclassifiedDomains, generateDailySummaries, aggregateSummaries, getSampleAnalytics } from './lib/analytics';
 import './App.css';
 
 // ==========================================
@@ -76,8 +77,36 @@ function MetricCard({ title, value, icon: Icon }) {
   );
 }
 
-function TimelineView({ timeline }) {
+function PreviewBanner({ timeRange }) {
+  const isWeek = timeRange === 'week';
+  return (
+    <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '16px 24px', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+      <span style={{ backgroundColor: 'var(--accent-primary)', color: 'white', padding: '4px 10px', borderRadius: '16px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Preview Mode</span>
+      <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+        Showing sample data. Use Vigil for {isWeek ? 'a few days' : 'several weeks'} to unlock personalized {isWeek ? 'weekly' : 'monthly'} insights.
+      </span>
+    </div>
+  );
+}
+
+function EducationalCard({ title, children }) {
+  return (
+    <div className="loop-card" style={{ backgroundColor: '#FDFCF9', borderStyle: 'dashed' }}>
+      <div className="loop-header" style={{ marginBottom: '12px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <Info size={14} /> {title}
+        </span>
+      </div>
+      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+        {children}
+      </p>
+    </div>
+  );
+}
+
+function TimelineView({ timeline, timeRange }) {
   const [selectedBlock, setSelectedBlock] = useState(null);
+  if (timeRange !== 'today') return null;
   if (!timeline || timeline.length === 0) return null;
   const totalDuration = timeline.reduce((acc, block) => acc + block.duration, 0);
 
@@ -237,6 +266,7 @@ function CommunicationCard({ item }) {
       <div className="loop-header">
         <span className="loop-type communication">Async Interruption</span>
         <div className="loop-stats">
+          <span className="stat-badge"><Activity size={12} /> {item.occurrences || 1}x</span>
           <span className="stat-badge"><Clock size={12} /> {item.duration}m lost</span>
         </div>
       </div>
@@ -322,7 +352,7 @@ function SettingsView({ userCategories, onCategorize, onDelete }) {
   );
 }
 
-function DebugPanel({ logs }) {
+function DebugPanel({ logs, dailySummaries }) {
   const [isOpen, setIsOpen] = useState(false);
   
   if (!logs || logs.length === 0) return null;
@@ -338,27 +368,61 @@ function DebugPanel({ logs }) {
       </button>
       
       {isOpen && (
-        <div style={{ marginTop: '16px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ backgroundColor: 'var(--bg-body)', borderBottom: '1px solid var(--border-subtle)' }}>
-                <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Domain</th>
-                <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Category</th>
-                <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Duration</th>
-                <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Classified By</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <td style={{ padding: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{log.domain}</td>
-                  <td style={{ padding: '12px', color: CATEGORY_COLORS[log.category] || CATEGORY_COLORS.Unknown, fontWeight: 500 }}>{log.category}</td>
-                  <td style={{ padding: '12px', color: 'var(--text-primary)' }}>{log.durationMinutes}m</td>
-                  <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>{log.classifiedBy || 'Unknown Engine'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          <div>
+            <h4 style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '12px' }}>Stored Daily Summaries</h4>
+            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--bg-body)', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Date</th>
+                    <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Focus Score</th>
+                    <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Deep Work</th>
+                    <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Context Switches</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(!dailySummaries || dailySummaries.length === 0) ? (
+                    <tr><td colSpan="4" style={{ padding: '12px', color: 'var(--text-secondary)' }}>No daily summaries stored.</td></tr>
+                  ) : dailySummaries.map((s, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td style={{ padding: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{s.date}</td>
+                      <td style={{ padding: '12px', color: 'var(--text-primary)' }}>{s.focusScore}</td>
+                      <td style={{ padding: '12px', color: 'var(--text-primary)' }}>{s.deepWorkMinutes}m</td>
+                      <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>{s.contextSwitches}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h4 style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '12px' }}>Raw Session Logs (Today)</h4>
+            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--bg-body)', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Domain</th>
+                    <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Category</th>
+                    <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Duration</th>
+                    <th style={{ padding: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Classified By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.map((log, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td style={{ padding: '12px', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{log.domain}</td>
+                      <td style={{ padding: '12px', color: CATEGORY_COLORS[log.category] || CATEGORY_COLORS.Unknown, fontWeight: 500 }}>{log.category}</td>
+                      <td style={{ padding: '12px', color: 'var(--text-primary)' }}>{log.durationMinutes}m</td>
+                      <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>{log.classifiedBy || 'Unknown Engine'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -388,29 +452,36 @@ function HealthCheckView({ data }) {
 
 export default function App() {
   const [logs, setLogs] = useState([]);
+  const [dailySummaries, setDailySummaries] = useState([]);
   const [userCategories, setUserCategories] = useState({});
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState('dashboard'); // 'dashboard' | 'settings'
+  const [view, setView] = useState('dashboard'); // 'dashboard' | 'settings' | 'healthCheck'
+  const [timeRange, setTimeRange] = useState('today'); // 'today' | 'week' | 'month'
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       try {
         if (typeof chrome !== 'undefined' && chrome.storage) {
-          const res = await chrome.storage.local.get(['logs', 'userCategories']);
+          const res = await chrome.storage.local.get(['logs', 'userCategories', 'dailySummaries']);
           const loadedLogs = res.logs || [];
           const loadedCategories = res.userCategories || {};
+          let loadedSummaries = res.dailySummaries || [];
           
           setLogs(loadedLogs);
           setUserCategories(loadedCategories);
           
-          if (loadedLogs.length === 0) {
-            setData(null);
-          } else {
-            const analytics = generateAnalytics(loadedLogs, loadedCategories);
-            setData(analytics);
-            console.log("Analytics Output", analytics);
+          // Generate any missing summaries for past days
+          if (loadedLogs.length > 0) {
+            const newSummaries = generateDailySummaries(loadedLogs, loadedSummaries, loadedCategories);
+            if (newSummaries.length > 0) {
+              loadedSummaries = [...loadedSummaries, ...newSummaries];
+              await chrome.storage.local.set({ dailySummaries: loadedSummaries });
+              console.log('✓ Generated new daily summaries:', newSummaries);
+            }
           }
+          setDailySummaries(loadedSummaries);
         } else {
           // Dev fallback
           setData(MOCK_DATA);
@@ -425,16 +496,51 @@ export default function App() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (isLoading) return;
+    
+    setIsPreviewMode(false);
+    
+    if (timeRange === 'today') {
+      const todayDate = new Date().toLocaleDateString('en-CA');
+      const todaysLogs = logs.filter(l => {
+        if (!l.startTime) return false;
+        return new Date(l.startTime).toLocaleDateString('en-CA') === todayDate;
+      });
+      if (todaysLogs.length === 0) {
+        setData(null);
+      } else {
+        const analytics = generateAnalytics(todaysLogs, userCategories);
+        setData(analytics);
+      }
+    } else {
+      const days = timeRange === 'week' ? 7 : 30;
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      const cutoffStr = cutoffDate.toLocaleDateString('en-CA');
+      
+      const relevantSummaries = dailySummaries.filter(s => s.date >= cutoffStr);
+      
+      if (timeRange === 'week' && relevantSummaries.length < 7) {
+        setIsPreviewMode(true);
+        setData(getSampleAnalytics('week'));
+      } else if (timeRange === 'month' && relevantSummaries.length < 14) {
+        setIsPreviewMode(true);
+        setData(getSampleAnalytics('month'));
+      } else if (relevantSummaries.length === 0) {
+        setData(null);
+      } else {
+        const analytics = aggregateSummaries(relevantSummaries);
+        setData(analytics);
+      }
+    }
+  }, [timeRange, logs, dailySummaries, userCategories, isLoading]);
+
   async function handleCategorize(domain, category) {
     const newCategories = { ...userCategories, [domain]: category };
     setUserCategories(newCategories);
     if (typeof chrome !== 'undefined' && chrome.storage) {
       await chrome.storage.local.set({ userCategories: newCategories });
-    }
-    if (logs.length > 0) {
-      const analytics = generateAnalytics(logs, newCategories);
-      setData(analytics);
-      console.log("Analytics Output", analytics);
     }
   }
 
@@ -444,11 +550,6 @@ export default function App() {
     setUserCategories(newCategories);
     if (typeof chrome !== 'undefined' && chrome.storage) {
       await chrome.storage.local.set({ userCategories: newCategories });
-    }
-    if (logs.length > 0) {
-      const analytics = generateAnalytics(logs, newCategories);
-      setData(analytics);
-      console.log("Analytics Output", analytics);
     }
   }
 
@@ -481,9 +582,18 @@ export default function App() {
           </div>
           {view === 'dashboard' && (
             <div className="date-selector" style={{ marginTop: '16px' }}>
-              <button className="date-btn active">Today</button>
-              <button className="date-btn">This Week</button>
-              <button className="date-btn">This Month</button>
+              <button 
+                className={`date-btn ${timeRange === 'today' ? 'active' : ''}`}
+                onClick={() => setTimeRange('today')}
+              >Today</button>
+              <button 
+                className={`date-btn ${timeRange === 'week' ? 'active' : ''}`}
+                onClick={() => setTimeRange('week')}
+              >This Week</button>
+              <button 
+                className={`date-btn ${timeRange === 'month' ? 'active' : ''}`}
+                onClick={() => setTimeRange('month')}
+              >This Month</button>
             </div>
           )}
         </div>
@@ -515,6 +625,8 @@ export default function App() {
         <HealthCheckView data={data} />
       ) : (
         <>
+          {isPreviewMode && <PreviewBanner timeRange={timeRange} />}
+          
           {/* ROW 1 */}
           <div className="dashboard-row">
             <div className="section-title">Session Metrics</div>
@@ -527,7 +639,7 @@ export default function App() {
           </div>
 
           {/* ROW 2 */}
-          <TimelineView timeline={data.timeline} />
+          <TimelineView timeline={data.timeline} timeRange={timeRange} />
 
           {/* ROW 3 */}
           <CategoryBreakdown data={data.categoryBreakdown} />
@@ -537,6 +649,9 @@ export default function App() {
             <div className="section-title">Research Loops</div>
             {data.researchLoops.length > 0 ? (
               <div className="loops-grid">
+                <EducationalCard title="Cognitive Science">
+                  <strong>Productive Context Switching.</strong> Switching between Development and Documentation represents healthy problem-solving loops, not distractions. Vigil rewards these transitions rather than penalizing them.
+                </EducationalCard>
                 {data.researchLoops.map((loop, i) => <ResearchLoopCard key={i} loop={loop} />)}
               </div>
             ) : (
@@ -549,6 +664,9 @@ export default function App() {
             <div className="section-title">Communication Interruptions</div>
             {data.communicationInterruptions.length > 0 ? (
               <div className="loops-grid">
+                <EducationalCard title="Focus Cost">
+                  <strong>Async Checking.</strong> Briefly opening email or chat during deep work fundamentally disrupts cognitive flow. It takes an average of 23 minutes to fully regain deep focus after a communication check.
+                </EducationalCard>
                 {data.communicationInterruptions.map((item, i) => <CommunicationCard key={i} item={item} />)}
               </div>
             ) : (
@@ -561,6 +679,9 @@ export default function App() {
             <div className="section-title">Distraction Spirals</div>
             {data.distractionLoops.length > 0 ? (
               <div className="loops-grid">
+                <EducationalCard title="Behavioral Patterns">
+                  <strong>Cascading Distractions.</strong> A Distraction Spiral occurs when you chain multiple distracting sites together (e.g., Social Media → Video → Entertainment), creating a compounding loss of focus.
+                </EducationalCard>
                 {data.distractionLoops.map((loop, i) => <DistractionLoopCard key={i} loop={loop} />)}
               </div>
             ) : (
@@ -576,7 +697,7 @@ export default function App() {
           />
 
           {/* ROW 8: DEBUG */}
-          {data.rawLogs && <DebugPanel logs={data.rawLogs} />}
+          <DebugPanel logs={data.rawLogs || []} dailySummaries={dailySummaries} />
         </>
       )}
 

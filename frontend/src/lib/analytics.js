@@ -213,7 +213,7 @@ function detectResearchLoops(logs) {
 }
 
 function detectCommunicationInterruptions(logs) {
-  const interruptions = [];
+  const loopsMap = new Map();
   const PRODUCTIVE_CATEGORIES = ['Development', 'Learning', 'Documentation'];
 
   for (let i = 0; i < logs.length - 2; i++) {
@@ -222,14 +222,24 @@ function detectCommunicationInterruptions(logs) {
     const c3 = logs[i+2].category;
 
     if (PRODUCTIVE_CATEGORIES.includes(c1) && c2 === 'Communication' && PRODUCTIVE_CATEGORIES.includes(c3)) {
-      interruptions.push({
-        interruptionType: "Async Check",
-        duration: Math.round(logs[i+1].durationMinutes),
-        interruptedCategory: c1
-      });
+      const key = c1;
+      const duration = Math.round(logs[i+1].durationMinutes);
+      
+      if (loopsMap.has(key)) {
+        const loop = loopsMap.get(key);
+        loop.occurrences += 1;
+        loop.duration += duration;
+      } else {
+        loopsMap.set(key, {
+          interruptionType: "Async Check",
+          occurrences: 1,
+          duration: duration,
+          interruptedCategory: c1
+        });
+      }
     }
   }
-  return interruptions;
+  return Array.from(loopsMap.values());
 }
 
 function detectDistractionLoops(logs) {
@@ -310,5 +320,109 @@ function getEmptyResponse() {
     communicationInterruptions: [],
     categoryBreakdown: {},
     timeline: []
+  };
+}
+
+export function generateDailySummaries(logs, existingSummaries = [], userCategories = {}) {
+  const newSummaries = [];
+  const todayDate = new Date().toLocaleDateString('en-CA'); // local YYYY-MM-DD
+  
+  const logsByDate = {};
+  for (const log of logs) {
+    if (!log.startTime) continue;
+    const logDate = new Date(log.startTime).toLocaleDateString('en-CA');
+    if (!logsByDate[logDate]) logsByDate[logDate] = [];
+    logsByDate[logDate].push(log);
+  }
+  
+  const existingDates = new Set(existingSummaries.map(s => s.date));
+  
+  for (const [date, dateLogs] of Object.entries(logsByDate)) {
+    if (date === todayDate) continue; 
+    if (existingDates.has(date)) continue; 
+    
+    const analytics = generateAnalytics(dateLogs, userCategories);
+    newSummaries.push({
+      date: date,
+      focusScore: analytics.focusScore,
+      deepWorkMinutes: analytics.deepWorkMinutes,
+      contextSwitches: analytics.contextSwitches,
+      longestSession: analytics.longestSession,
+      categoryBreakdown: analytics.categoryBreakdown,
+      researchLoopsCount: analytics.researchLoops.length,
+      communicationInterruptionsCount: analytics.communicationInterruptions.length,
+      distractionLoopsCount: analytics.distractionLoops.length
+    });
+  }
+  
+  return newSummaries;
+}
+
+export function aggregateSummaries(summaries) {
+  if (!summaries || summaries.length === 0) return getEmptyResponse();
+
+  let focusScoreSum = 0;
+  let deepWorkMinutes = 0;
+  let contextSwitches = 0;
+  let longestSession = 0;
+  
+  const categoryBreakdown = {};
+  
+  for (const s of summaries) {
+    focusScoreSum += s.focusScore || 0;
+    deepWorkMinutes += s.deepWorkMinutes || 0;
+    contextSwitches += s.contextSwitches || 0;
+    if ((s.longestSession || 0) > longestSession) longestSession = s.longestSession;
+    
+    if (s.categoryBreakdown) {
+      for (const [cat, val] of Object.entries(s.categoryBreakdown)) {
+        categoryBreakdown[cat] = (categoryBreakdown[cat] || 0) + val;
+      }
+    }
+  }
+
+  const researchLoopsCount = summaries.reduce((sum, s) => sum + (s.researchLoopsCount || 0), 0);
+  const commCount = summaries.reduce((sum, s) => sum + (s.communicationInterruptionsCount || 0), 0);
+  const distCount = summaries.reduce((sum, s) => sum + (s.distractionLoopsCount || 0), 0);
+  
+  return {
+    focusScore: Math.round(focusScoreSum / summaries.length),
+    deepWorkMinutes,
+    contextSwitches,
+    longestSession,
+    categoryBreakdown,
+    researchLoops: researchLoopsCount > 0 ? [{ type: 'Aggregate', occurrences: researchLoopsCount, totalDuration: 0, categories: ['Development', 'Documentation', 'Development'] }] : [],
+    communicationInterruptions: commCount > 0 ? [{ interruptionType: 'Aggregate', occurrences: commCount, duration: 0, interruptedCategory: 'Development' }] : [],
+    distractionLoops: distCount > 0 ? [{ loopType: 'Aggregate', occurrences: distCount, totalDuration: 0, categories: ['Social', 'Video', 'Entertainment'] }] : [],
+    timeline: [], 
+    rawLogs: []
+  };
+}
+
+export function getSampleAnalytics(timeRange) {
+  const multiplier = timeRange === 'month' ? 4 : 1;
+  return {
+    focusScore: 78,
+    deepWorkMinutes: 1200 * multiplier,
+    contextSwitches: 140 * multiplier,
+    longestSession: 85,
+    categoryBreakdown: {
+      Development: 450 * multiplier,
+      Documentation: 300 * multiplier,
+      Communication: 120 * multiplier,
+      Search: 80 * multiplier,
+      Social: 60 * multiplier
+    },
+    researchLoops: [
+      { type: 'Research Loop', occurrences: 12 * multiplier, totalDuration: 180 * multiplier, categories: ['Development', 'Documentation', 'Development'] }
+    ],
+    communicationInterruptions: [
+      { interruptionType: 'Async Check', occurrences: 6 * multiplier, duration: 45 * multiplier, interruptedCategory: 'Development' }
+    ],
+    distractionLoops: [
+      { loopType: 'Distraction Spiral', occurrences: 5 * multiplier, totalDuration: 60 * multiplier, categories: ['Social', 'Video', 'Social'] }
+    ],
+    timeline: [],
+    rawLogs: []
   };
 }
