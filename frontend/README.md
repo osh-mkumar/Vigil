@@ -1,6 +1,6 @@
-# Focus Analyzer Frontend
+# VIGIL Frontend
 
-React + Vite minimal UI for behavioral focus analysis.
+React + Vite minimal UI for privacy-first browser attention analytics.
 
 ## Setup
 
@@ -20,8 +20,9 @@ Opens http://localhost:5173
 
 **App.jsx** contains:
 - Sample logs (hardcoded for demo)
-- Analyze button that POSTs to `/api/analyze`
-- Rendering of periods, loops, and assessment
+- Analyze Session button that POSTs to `/api/analyze`
+- Rendering of dashboard metrics (Focus Score, Deep Work Time, etc.)
+- Loop detection visualization
 - Error/loading states
 
 **Vite proxy** (`vite.config.js`):
@@ -30,7 +31,7 @@ Opens http://localhost:5173
 - Production: frontend and backend on same origin
 
 **CSS** (`App.css`):
-- Simple color scheme (blue buttons, green/red periods)
+- Simple color scheme
 - Responsive layout
 - No external libraries
 
@@ -41,43 +42,38 @@ App
 ├── Header
 ├── Controls (Analyze button)
 └── Results
-    ├── Work Periods (focus vs fragmented)
-    ├── Switching Patterns (loops)
-    └── Summary (assessment)
+    ├── Dashboard Metrics (Focus Score, Deep Work, Switches)
+    └── Loop Detection (Research vs Distraction loops)
 ```
 
 ## Expected Backend Response
 
-The component assumes Gemini returns this JSON structure:
+The component assumes the backend returns this JSON structure:
 
 ```json
 {
-  "periods": [
+  "focusScore": 78,
+  "deepWorkTime": 45,
+  "contextSwitchCount": 12,
+  "longestFocusSession": 25,
+  "researchLoops": [
     {
-      "startTime": "ISO timestamp",
-      "endTime": "ISO timestamp",
-      "type": "focus|fragmented",
-      "duration_minutes": 15,
-      "primary_domains": ["domain.com"],
-      "explanation": "..."
+      "domains": ["github.com", "stackoverflow.com"],
+      "occurrences": 4
     }
   ],
-  "switching_loops": [
+  "distractionLoops": [
     {
-      "domains": ["site1.com", "site2.com"],
-      "occurrences": 3,
-      "likely_cause": "..."
+      "domains": ["twitter.com", "news.ycombinator.com"],
+      "occurrences": 2
     }
-  ],
-  "overall_assessment": "...",
-  "confidence_level": "low|medium|high"
+  ]
 }
 ```
 
 ## Design Decisions
 
 - **No state management library** – useState is enough for this demo
-- **Hardcoded logs** – In production, these come from Chrome extension via `/upload` endpoint
-- **Proxy in Vite** – Simple, avoids deployment complexity during hackathon
+- **Hardcoded logs** – In production, these come from Chrome extension
+- **Proxy in Vite** – Simple, avoids deployment complexity
 - **Minimal styling** – Focus on layout clarity, not design
-- **Direct Gemini response** – No post-processing, renders as-is

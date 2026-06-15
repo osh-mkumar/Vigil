@@ -1,6 +1,6 @@
-# Focus Analyzer Chrome Extension
+# VIGIL Chrome Extension
 
-Chrome Extension for tracking tab activity and analyzing focus patterns with Gemini AI.
+Chrome Extension for tracking tab activity and generating privacy-first browser attention analytics.
 
 ## Installation
 
@@ -13,12 +13,12 @@ Chrome Extension for tracking tab activity and analyzing focus patterns with Gem
 
 1. **Start Tracking**: Click extension icon → "Start Tracking"
 2. **Browse normally**: Extension tracks active tab switches
-3. **Analyze**: Click "Analyze My Focus" to send logs to backend
-4. **View Results**: Web app opens automatically with Gemini analysis
+3. **Analyze**: Click "Analyze Session" to process your logs
+4. **View Results**: Web app opens automatically with your session analytics
 
 ## Privacy
 
-- Data stored locally until you click "Analyze My Focus"
+- Data stored locally until you click "Analyze Session"
 - No background uploads or third-party tracking
 - Only tracks tab URLs and timestamps
 - No keystroke or content tracking
@@ -30,7 +30,7 @@ extension/
 ├── manifest.json      # Chrome extension configuration (MV3)
 ├── background.js      # Tab tracking service worker
 ├── popup.html         # Extension popup UI
-├── popup.js          # Popup logic and backend communication
+├── popup.js          # Popup logic and communication
 └── README.md         # This file
 ```
 
@@ -55,4 +55,3 @@ Sends POST request to `http://localhost:3001/analyze` with body:
 - ✅ User consent required before tracking
 - ✅ Local-first data storage
 - ✅ Clean integration with existing backend
-- ✅ Demo-safe and judge-friendly

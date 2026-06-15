@@ -1,4 +1,4 @@
-// Popup UI controller for Focus Analyzer extension
+// Popup UI controller for VIGIL extension
 
 const trackBtn = document.getElementById('trackBtn');
 const analyzeBtn = document.getElementById('analyzeBtn');
@@ -73,7 +73,7 @@ analyzeBtn.addEventListener('click', async () => {
   // Disable button during request
   analyzeBtn.disabled = true;
   analyzeBtn.textContent = 'Analyzing...';
-  statusDiv.textContent = '🔄 Sending to Gemini...';
+  statusDiv.textContent = '🔄 Analyzing Session...';
   statusDiv.className = 'status analyzing';
   errorDiv.style.display = 'none';
 
@@ -107,7 +107,7 @@ analyzeBtn.addEventListener('click', async () => {
     showError(`Error: ${error.message}. Make sure backend is running on port 3001.`);
   } finally {
     analyzeBtn.disabled = false;
-    analyzeBtn.textContent = 'Analyze My Focus';
+    analyzeBtn.textContent = 'Analyze Session';
     updateUI();
   }
 });

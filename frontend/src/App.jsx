@@ -55,14 +55,13 @@ export default function App() {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [personality, setPersonality] = useState('zen'); // 'zen' or 'drill'
   const [darkMode, setDarkMode] = useState(false); // light by default
 
   // Check for analysis from Chrome extension via URL parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const analysisParam = urlParams.get('analysis');
-    
+
     if (analysisParam) {
       try {
         const analysisData = JSON.parse(decodeURIComponent(analysisParam));
@@ -134,24 +133,8 @@ export default function App() {
   return (
     <div className="container">
       <header className="header">
-        <h1>Focus Analyzer</h1>
-        <p>Understand your browser behavior patterns with Gemini</p>
-        
-        {/* Personality Toggle */}
-        <div className="personality-toggle">
-          <button
-            className={`toggle-btn ${personality === 'zen' ? 'active' : ''}`}
-            onClick={() => setPersonality('zen')}
-          >
-            🧘 Zen Mode
-          </button>
-          <button
-            className={`toggle-btn ${personality === 'drill' ? 'active' : ''}`}
-            onClick={() => setPersonality('drill')}
-          >
-            💪 Drill Mode
-          </button>
-        </div>
+        <h1>VIGIL</h1>
+        <p>Privacy-first browser attention analytics</p>
 
         {/* Theme Toggle */}
         <div className="theme-toggle">
@@ -172,7 +155,7 @@ export default function App() {
           disabled={loading}
           className="analyze-btn"
         >
-          {loading ? 'Analyzing patterns with Gemini...' : 'Analyze with Gemini'}
+          {loading ? 'Analyzing Session...' : 'Analyze Session'}
         </button>
         {error && <p className="error">Error: {error}</p>}
       </section>
@@ -180,87 +163,68 @@ export default function App() {
       {/* Results */}
       {analysis && (
         <div className="results">
-          {/* Show fallback warning if present */}
-          {analysis.is_fallback && (
-            <div className="fallback-notice">
-              ⚠️ Analysis temporarily unavailable. Showing fallback response.
-            </div>
-          )}
+          {/* Dashboard Metrics */}
+          <section className="section dashboard-metrics">
+            <h2>Session Analytics</h2>
+            <div className="metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '16px' }}>
+              
+              <div className="metric-card" style={{ padding: '16px', background: 'var(--card-bg, #fff)', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <h3 style={{ fontSize: '0.9em', color: 'var(--text-secondary, #666)', marginBottom: '8px' }}>Focus Score</h3>
+                <p style={{ fontSize: '1.5em', fontWeight: 'bold' }}>{analysis.focusScore || 0}/100</p>
+              </div>
 
-          {/* Focus Periods */}
-          <section className="section">
-            <h2>Work Periods</h2>
-            <div className="periods-list">
-              {analysis.periods && analysis.periods.length > 0 ? (
-                analysis.periods.map((period, idx) => (
-                  <div
-                    key={idx}
-                    className={`period-card period-${period.type}`}
-                  >
-                    <div className="period-header">
-                      <span className="period-type">
-                        {period.type === 'focus' ? '🟢 Deep Work' : '🔴 Fragmented'}
-                      </span>
-                      <span className="period-duration">
-                        {period.duration_minutes} min
-                      </span>
-                    </div>
-                    <div className="period-domains">
-                      {period.primary_domains &&
-                        period.primary_domains.map((domain) => (
-                          <span key={domain} className="domain-badge">
-                            {domain}
-                          </span>
-                        ))}
-                    </div>
-                    <p className="period-explanation">
-                      {personality === 'zen' 
-                        ? period.explanation 
-                        : period.explanation.replace(/likely suggests|suggests|may indicate/gi, 'shows').replace(/possibly|perhaps/gi, 'clearly')}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="no-data">No periods analyzed</p>
-              )}
+              <div className="metric-card" style={{ padding: '16px', background: 'var(--card-bg, #fff)', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <h3 style={{ fontSize: '0.9em', color: 'var(--text-secondary, #666)', marginBottom: '8px' }}>Deep Work Time</h3>
+                <p style={{ fontSize: '1.5em', fontWeight: 'bold' }}>{analysis.deepWorkTime || 0} min</p>
+              </div>
+
+              <div className="metric-card" style={{ padding: '16px', background: 'var(--card-bg, #fff)', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <h3 style={{ fontSize: '0.9em', color: 'var(--text-secondary, #666)', marginBottom: '8px' }}>Context Switches</h3>
+                <p style={{ fontSize: '1.5em', fontWeight: 'bold' }}>{analysis.contextSwitchCount || 0}</p>
+              </div>
+
+              <div className="metric-card" style={{ padding: '16px', background: 'var(--card-bg, #fff)', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <h3 style={{ fontSize: '0.9em', color: 'var(--text-secondary, #666)', marginBottom: '8px' }}>Longest Focus Session</h3>
+                <p style={{ fontSize: '1.5em', fontWeight: 'bold' }}>{analysis.longestFocusSession || 0} min</p>
+              </div>
+
             </div>
           </section>
 
-          {/* Switching Loops */}
-          {analysis.switching_loops && analysis.switching_loops.length > 0 && (
-            <section className="section">
-              <h2>Switching Patterns</h2>
-              <div className="loops-list">
-                {analysis.switching_loops.map((loop, idx) => (
-                  <div key={idx} className="loop-card">
-                    <div className="loop-header">
+          {/* Loop Detection */}
+          <section className="section">
+            <h2>Loop Detection</h2>
+            <div className="loops-list">
+              {analysis.researchLoops && analysis.researchLoops.length > 0 && (
+                <div className="loop-group">
+                  <h3>Research Loops</h3>
+                  {analysis.researchLoops.map((loop, idx) => (
+                    <div key={idx} className="loop-card" style={{ borderLeft: '4px solid #10b981', padding: '12px', margin: '8px 0', background: 'var(--card-bg, #fff)', borderRadius: '4px' }}>
                       <span className="loop-domains">
                         {loop.domains.join(' ↔ ')}
                       </span>
-                      <span className="loop-count">{loop.occurrences}x</span>
+                      <span className="loop-count" style={{ marginLeft: '12px', fontWeight: 'bold' }}>{loop.occurrences}x</span>
                     </div>
-                    <p className="loop-cause">
-                      {personality === 'zen' 
-                        ? loop.likely_cause 
-                        : loop.likely_cause.replace(/likely|suggests|may/gi, '').replace(/possibly|perhaps/gi, '')}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+                  ))}
+                </div>
+              )}
 
-          {/* Overall Assessment */}
-          <section className="section">
-            <h2>Summary</h2>
-            <div className="assessment-card">
-              <p className="assessment-text">
-                {analysis.overall_assessment}
-              </p>
-              {analysis.confidence_level && (
-                <p className="confidence">
-                  Confidence: <strong>{analysis.confidence_level}</strong>
-                </p>
+              {analysis.distractionLoops && analysis.distractionLoops.length > 0 && (
+                <div className="loop-group" style={{ marginTop: '16px' }}>
+                  <h3>Distraction Loops</h3>
+                  {analysis.distractionLoops.map((loop, idx) => (
+                    <div key={idx} className="loop-card" style={{ borderLeft: '4px solid #ef4444', padding: '12px', margin: '8px 0', background: 'var(--card-bg, #fff)', borderRadius: '4px' }}>
+                      <span className="loop-domains">
+                        {loop.domains.join(' ↔ ')}
+                      </span>
+                      <span className="loop-count" style={{ marginLeft: '12px', fontWeight: 'bold' }}>{loop.occurrences}x</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {(!analysis.researchLoops?.length && !analysis.distractionLoops?.length) && (
+                <p className="no-data">No loops detected in this session.</p>
               )}
             </div>
           </section>
@@ -270,11 +234,10 @@ export default function App() {
       {/* Empty State */}
       {!analysis && !loading && !error && (
         <div className="empty-state">
-          <p>Click "Analyze with Gemini" to understand your focus patterns and switching behaviors.</p>
-          <p className="empty-state-hint">Our AI will identify deep work periods, switching loops, and likely behavioral causes.</p>
+          <p>Click "Analyze Session" to understand your focus patterns and context switching behaviors.</p>
+          <p className="empty-state-hint">VIGIL will calculate your focus score, deep work time, and identify research or distraction loops.</p>
         </div>
       )}
     </div>
   );
 }
-
