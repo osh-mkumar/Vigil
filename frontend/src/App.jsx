@@ -10,7 +10,8 @@ import {
   ZapOff,
   Settings,
   ShieldCheck,
-  Info
+  Info,
+  X
 } from 'lucide-react';
 import { generateAnalytics, getUnclassifiedDomains, generateDailySummaries, aggregateSummaries, getSampleAnalytics } from './lib/analytics';
 import './App.css';
@@ -447,6 +448,149 @@ function HealthCheckView({ data }) {
 }
 
 // ==========================================
+// ATTENTION CALENDAR
+// ==========================================
+
+function AttentionCalendar({ dailySummaries }) {
+  const [selectedDay, setSelectedDay] = useState(null);
+
+  const today = new Date();
+  const days = [];
+  
+  const useSampleData = dailySummaries.length < 7;
+  const formatDate = (date) => date.toLocaleDateString('en-CA');
+  
+  const summaryMap = {};
+  if (useSampleData) {
+    for (let i = 0; i < 84; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateStr = formatDate(d);
+      
+      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      const isWorking = !isWeekend && Math.random() > 0.1;
+      
+      if (isWorking) {
+        summaryMap[dateStr] = {
+          date: dateStr,
+          focusScore: Math.floor(Math.random() * 80) + 20,
+          deepWorkMinutes: Math.floor(Math.random() * 180) + 30,
+          contextSwitches: Math.floor(Math.random() * 30) + 5,
+          researchLoops: Math.floor(Math.random() * 5)
+        };
+      }
+    }
+  } else {
+    dailySummaries.forEach(s => {
+      summaryMap[s.date] = s;
+    });
+  }
+
+  for (let i = 83; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = formatDate(d);
+    
+    const s = summaryMap[dateStr];
+    days.push({
+      date: dateStr,
+      displayDate: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      data: s || null
+    });
+  }
+  
+  const getColorClass = (score) => {
+    if (score === undefined || score === null) return 'calendar-day-empty';
+    if (score <= 40) return 'calendar-day-low';
+    if (score <= 70) return 'calendar-day-medium';
+    return 'calendar-day-high';
+  };
+
+  return (
+    <div className="dashboard-row">
+      <div className="section-title">Attention Calendar</div>
+      <div className="calendar-card">
+        <div className="calendar-header">
+          <div className="calendar-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Focus History
+            {useSampleData && (
+              <span style={{ backgroundColor: 'var(--accent-primary)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Demo Data</span>
+            )}
+          </div>
+        </div>
+        
+        <div className="calendar-grid">
+          {days.map((day, idx) => (
+            <div 
+              key={idx} 
+              className={`calendar-day ${getColorClass(day.data?.focusScore)}`}
+              onClick={() => day.data && setSelectedDay(day)}
+            >
+              {day.data && (
+                <div className="calendar-tooltip">
+                  <div className="tooltip-header">{day.displayDate}</div>
+                  <div className="tooltip-row">
+                    <span className="tooltip-label">Focus Score</span>
+                    <span className="tooltip-value">{day.data.focusScore}</span>
+                  </div>
+                  <div className="tooltip-row">
+                    <span className="tooltip-label">Deep Work</span>
+                    <span className="tooltip-value">{day.data.deepWorkMinutes}m</span>
+                  </div>
+                  <div className="tooltip-row">
+                    <span className="tooltip-label">Switches</span>
+                    <span className="tooltip-value">{day.data.contextSwitches}</span>
+                  </div>
+                  <div className="tooltip-row">
+                    <span className="tooltip-label">Research Loops</span>
+                    <span className="tooltip-value">{day.data.researchLoops || 0}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        
+        <div className="calendar-legend">
+          <span>Less Focus</span>
+          <div className="legend-squares">
+            <div className="legend-square calendar-day-low"></div>
+            <div className="legend-square calendar-day-medium"></div>
+            <div className="legend-square calendar-day-high"></div>
+          </div>
+          <span>More Focus</span>
+        </div>
+      </div>
+
+      {selectedDay && selectedDay.data && (
+        <div className="modal-overlay" onClick={() => setSelectedDay(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <X 
+              className="modal-close" 
+              size={24} 
+              onClick={() => setSelectedDay(null)} 
+            />
+            <h2 style={{ fontFamily: 'var(--font-serif)', color: 'var(--text-primary)', marginBottom: '4px' }}>
+              {selectedDay.displayDate}
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
+              Daily Focus Summary
+            </p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <MetricCard title="Focus Score" value={`${selectedDay.data.focusScore}/100`} icon={Activity} />
+              <MetricCard title="Deep Work" value={`${selectedDay.data.deepWorkMinutes}m`} icon={BrainCircuit} />
+              <MetricCard title="Context Switches" value={selectedDay.data.contextSwitches} icon={Shuffle} />
+              <MetricCard title="Research Loops" value={selectedDay.data.researchLoops || 0} icon={Clock} />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
 // MAIN APP
 // ==========================================
 
@@ -637,6 +781,8 @@ export default function App() {
               <MetricCard title="Longest Session" value={`${data.longestSession}m`} icon={Clock} />
             </div>
           </div>
+
+          <AttentionCalendar dailySummaries={dailySummaries} />
 
           {/* ROW 2 */}
           <TimelineView timeline={data.timeline} timeRange={timeRange} />
